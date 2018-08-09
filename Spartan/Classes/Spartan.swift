@@ -909,6 +909,7 @@ public class Spartan: NSObject {
     }
     
     
+    
     /* API Documentation: https://developer.spotify.com/web-api/replace-playlists-tracks */
     
     @discardableResult
@@ -943,6 +944,75 @@ public class Spartan: NSObject {
                                                           failure: failure)
     }
     
+    // MARK: - Player Methods
+    
+    /* API Documentation: https://developer.spotify.com/documentation/web-api/reference/player/start-a-users-playback/ */
+    
+    @discardableResult
+    public class func play(deviceId: String? = nil,
+                           uris: [String]? = nil,
+                           trackURIOffset: String? = nil,
+                           positionOffset: Int? = nil,
+                           contextURI: String,
+                           success: (() -> Void)?,
+                           failure: ((SpartanError) -> Void)?) -> Request {
+        
+        var url = SpartanURL(url: "me/player/play")
+        if let deviceId = deviceId {
+           url = SpartanURL(url: "me/player/play?device_id=\(deviceId)")
+        }
+        var parameters: [String: Any] = ["context_uri" : contextURI]
+        checkOptionalParamAddition(paramName: "uris", param: uris, parameters: &parameters)
+        if let trackURIOffset = trackURIOffset {
+            parameters["offset"] = ["uri": trackURIOffset]
+        }
+        if let positionOffset = positionOffset {
+            parameters["offset"] = ["position": positionOffset]
+        }
+        return SpartanRequestManager.default.makeRequest(.put,
+                                                         url: url,
+                                                         parameters: parameters,
+                                                         encoding: JSONEncoding.default,
+                                                         success: success,
+                                                         failure: failure)
+    }
+    
+    /* API Documentation: https://developer.spotify.com/documentation/web-api/reference/player/seek-to-position-in-currently-playing-track/ */
+    
+    @discardableResult
+    public class func seek(position: Int,
+                           deviceId: String? = nil,
+                           success: (() -> Void)?,
+                           failure: ((SpartanError) -> Void)?) -> Request {
+        
+        var queryParams = "position_ms=\(position)"
+        
+        if let deviceId = deviceId {
+            queryParams += "&device_id=\(deviceId)"
+        }
+        let url = SpartanURL(url: "me/player/seek?\(queryParams)")
+        
+        return SpartanRequestManager.default.makeRequest(.put,
+                                                         url: url,
+                                                         success: success,
+                                                         failure: failure)
+    }
+    
+    /* API Documentation: https://developer.spotify.com/documentation/web-api/reference/player/get-a-users-available-devices/ */
+    
+    @discardableResult
+    public class func getUserAvailableDevices(success: ((DeviceObjects) -> Void)?,
+                                             failure: ((SpartanError) -> Void)?) -> Request {
+        
+        let url = SpartanURL(url: "me/player/devices")
+        return SpartanRequestManager.default.mapObject(.get,
+                                                       url: url,
+                                                       success: success,
+                                                       failure: failure)
+    }
+    
+    
+    // MARK: - Private Methods
     private class func checkOptionalParamAddition(paramName: String,
                                                   param: Any?, parameters: inout [String: Any]) {
         if let param = param {
